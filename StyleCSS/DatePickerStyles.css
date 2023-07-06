@@ -1,0 +1,12 @@
+.custom-datepicker-input {
+  width: 200px;
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  background-color: "red";
+}
+
+/* Custom styles for the date picker container */
+.custom-datepicker-container {
+  /* Add your styles here */
+}
