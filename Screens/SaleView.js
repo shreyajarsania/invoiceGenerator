@@ -7,6 +7,8 @@ import {
   Button,
   FlatList,
   ScrollView,
+  TouchableOpacity,
+  ImageBackground,
 } from "react-native";
 import { Divider } from "react-native-paper";
 import DropdownComp from "../Components/DropdownComp";
@@ -15,11 +17,24 @@ import { TextInput } from "react-native";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import moment from "moment";
+import { MaterialIcons } from "@expo/vector-icons";
+import { PDFDocument, PageSizes } from "pdf-lib";
 
 const SaleView = ({ history }) => {
   const [fixedText, setFixedText] = useState({
     invoiceStr: "",
     invoiceNo: "",
+    tnc: "",
+    note: "",
+    cgst: "",
+    sgst: "",
+    extraDiscount: "",
+    deliveryCharges: "",
+    roundOff: "",
+    grandTotal: "",
+    totalQty: "",
+    totalDiscount: "",
+    totalTax: "",
   });
   const [dropdownList, setDropdownList] = useState({
     accountType: [],
@@ -58,6 +73,13 @@ const SaleView = ({ history }) => {
       let tempFixedText = fixedText;
       tempFixedText.invoiceStr = "INV/JPR/";
       tempFixedText.invoiceYearStr = "FY/2023";
+      tempFixedText.tnc =
+        "1.Payment Terms: Just Pay! etc. \n2.Delivery: Charges! etc";
+      tempFixedText.cgst = "45,000";
+      tempFixedText.sgst = "45,000";
+      tempFixedText.extraDiscount = "635.21";
+      tempFixedText.deliveryCharges = "1200.21";
+      tempFixedText.roundOff = "0.04";
       setFixedText({ ...tempFixedText });
 
       let dropdownListTemp = dropdownList;
@@ -140,13 +162,13 @@ const SaleView = ({ history }) => {
           label: "itemNo. 1",
           value: "1",
           rate: "155000",
-          discount: "10000",
+          discount: "5000",
         },
         {
           label: "itemNo. 2",
           value: "2",
-          rate: "200000",
-          discount: "5000",
+          rate: "102000",
+          discount: "2000",
         },
         {
           label: "itemNo. 3",
@@ -191,48 +213,56 @@ const SaleView = ({ history }) => {
           keyName: "sno",
           width: "100px",
           dropdown: false,
+          total: "",
         },
         {
           label: "Item",
           keyName: "item",
           width: "310px",
           dropdown: false,
+          total: "",
         },
         {
           label: "Qty",
           keyName: "qty",
           width: "100px",
           dropdown: false,
+          total: "0",
         },
         {
           label: "Rate@",
           keyName: "rate",
           width: "100px",
           dropdown: false,
+          total: "0",
         },
         {
           label: "Discount",
           keyName: "discount",
           width: "100px",
           dropdown: false,
+          total: "0",
         },
         {
           label: "Amount",
           keyName: "amount",
           width: "100px",
           dropdown: false,
+          total: "0",
         },
         {
           label: "GST%",
           keyName: "gst",
           width: "100px",
           dropdown: true,
+          total: "0",
         },
         {
           label: "Net Amount",
           keyName: "netAmt",
           width: "100px",
           dropdown: false,
+          total: "0",
         },
       ];
       setHeaderList(headerListTemp);
@@ -243,376 +273,889 @@ const SaleView = ({ history }) => {
     setDataValues();
   }, []);
 
+  const generatePDFStyle2 = async () => {
+    console.log("before pdfDoc!!!!");
+    const pdfDoc = await PDFDocument.create();
+    console.log("after pdfDoc!!!!");
+    const page = pdfDoc.addPage(PageSizes.A4);
+    const { width, height } = page.getSize();
+    const textContent = "Hello, World!";
+
+    page.drawText(textContent, {
+      x: 50,
+      y: height - 50,
+      size: 30,
+    });
+
+    const pdfBytes = await pdfDoc.save();
+
+    const blob = new Blob([pdfBytes], { type: "application/pdf" });
+    const url = URL.createObjectURL(blob);
+    pdfRef.current.src = url;
+  };
+
   return (
-    <View
-      style={{
-        borderRadius: 5,
-        borderWidth: 1,
-        flex: 1,
-        padding: 10,
-        margin: 30,
-      }}
-    >
-      <Text style={{ fontWeight: "bold", fontSize: 18 }}>
-        Create Sales Invoice
-      </Text>
-      <Divider bold={true} style={{ height: 2, backgroundColor: "black" }} />
-      {/*Part 1*/}
-      <View
-        style={{
-          flexWrap: "wrap",
-          flexDirection: "row",
-          justifyContent: "space-between",
-        }}
+    <View style={{ flex: 1 }}>
+      <ImageBackground
+        source={require("../assets/backgroundImg.jpg")}
+        resizeMode="cover"
+        style={styles.mainContainer}
       >
-        <DropdownComp
-          label={"Account Type"}
-          data={dropdownList.accountType}
-          placeholder={"Sales A/c"}
-          dropdownCompValue={{ minWidth: "150px" }}
-          selectedValue={selectedDDValue.accountType}
-          setData={(item) => {
-            let tempSelecteValue = selectedDDValue;
-            tempSelecteValue.accountType = item;
-            setSelectedDDValue({ ...tempSelecteValue });
-          }}
-        />
+        <Text style={{ fontWeight: "bold", fontSize: 20 }}>
+          Create Sales Invoice
+        </Text>
+        <Divider bold={true} style={{ height: 2, backgroundColor: "black" }} />
+        {/*Part 1*/}
         <View
           style={{
-            flexDirection: "row",
-            marginHorizontal: 10,
-            marginBottom: 10,
-          }}
-        >
-          <DropdownComp
-            label={"Invoice No."}
-            data={dropdownList.salesVoucher}
-            placeholder={"Sales Voucher"}
-            selectedValue={selectedDDValue.salesVoucher}
-            setData={(item) => {
-              let tempSelecteValue = selectedDDValue;
-              tempSelecteValue.salesVoucher = item;
-              setSelectedDDValue({ ...tempSelecteValue });
-            }}
-          />
-          <View
-            style={{
-              borderWidth: 1,
-              marginTop: 16,
-              justifyContent: "center",
-              paddingHorizontal: 4,
-              height: 30,
-              backgroundColor: "grey",
-            }}
-          >
-            <Text>{fixedText.invoiceStr}</Text>
-          </View>
-          <TextInput
-            style={{
-              marginTop: 16,
-              borderWidth: 1,
-              padding: 10,
-              height: 30,
-              width: "25%",
-            }}
-            onChangeText={(item) => {
-              let fixedTextTemp = fixedText;
-              fixedTextTemp.invoiceNo = item;
-              setFixedText({ ...fixedTextTemp });
-            }}
-            value={fixedText.invoiceNo}
-            placeholder="Invoice no."
-            keyboardType="numeric"
-          />
-          <View
-            style={{
-              borderWidth: 1,
-              marginTop: 16,
-              justifyContent: "center",
-              paddingHorizontal: 4,
-              height: 30,
-              backgroundColor: "grey",
-            }}
-          >
-            <Text>{fixedText.invoiceYearStr}</Text>
-          </View>
-        </View>
-        <View
-          style={{
+            flexWrap: "wrap",
             flexDirection: "row",
             justifyContent: "space-between",
-            width: "40%",
-            maxWidth: "380px",
-            flexWrap: "wrap",
           }}
         >
-          <View style={{ zIndex: 2000 }}>
-            <Text style={{ fontSize: 12 }}>{"Issue Date"}</Text>
-            <DatePicker
-              selected={dateValue.issueDate}
-              dateFormat="dd/MM/yyyy"
-              onChange={(value) => {
-                handleDateChange(value, "issueDate");
-              }}
-            />
-          </View>
-          <View>
-            <Text style={{ fontSize: 12 }}>{"Due Date"}</Text>
-            <DatePicker
-              selected={dateValue.dueDate}
-              dateFormat="dd/MM/yyyy"
-              onChange={(value) => {
-                handleDateChange(value, "dueDate");
-              }}
-            />
-          </View>
-        </View>
-      </View>
-      {/*Part 2*/}
-      <View
-        style={{
-          flexWrap: "wrap",
-          flexDirection: "row",
-          justifyContent: "space-between",
-          marginTop: 10,
-          zIndex: -1000,
-        }}
-      >
-        <View>
           <DropdownComp
-            label={"Bill To"}
-            data={dropdownList.billTo}
-            placeholder={"Bill to"}
-            selectedValue={selectedDDValue.billTo}
+            label={"Account Type"}
+            data={dropdownList.accountType}
+            placeholder={"Sales A/c"}
             dropdownCompValue={{ minWidth: "150px" }}
+            selectedValue={selectedDDValue.accountType}
             setData={(item) => {
               let tempSelecteValue = selectedDDValue;
-              tempSelecteValue.billTo = item;
+              tempSelecteValue.accountType = item;
               setSelectedDDValue({ ...tempSelecteValue });
             }}
           />
-          {Object.keys(selectedDDValue.billTo).length > 0 ? (
-            <FlatList
-              data={selectedDDValue.billTo.fields}
-              keyExtractor={(item, index) => index.toString()}
-              style={{ marginTop: 5 }}
-              renderItem={({ item, index }) => {
-                return <Text>{item}</Text>;
+          <View
+            style={{
+              flexDirection: "row",
+              marginHorizontal: 10,
+              marginBottom: 10,
+            }}
+          >
+            <DropdownComp
+              label={"Invoice No."}
+              data={dropdownList.salesVoucher}
+              placeholder={"Sales Voucher"}
+              selectedValue={selectedDDValue.salesVoucher}
+              setData={(item) => {
+                let tempSelecteValue = selectedDDValue;
+                tempSelecteValue.salesVoucher = item;
+                setSelectedDDValue({ ...tempSelecteValue });
               }}
             />
-          ) : null}
-        </View>
-        <View style={{ minWidth: "30%" }}>
-          <DropdownComp
-            label={"Bill Address"}
-            data={dropdownList.billAddress}
-            placeholder={"Bill Address"}
-            selectedValue={selectedDDValue.billAddress}
-            setData={(item) => {
-              let tempSelecteValue = selectedDDValue;
-              tempSelecteValue.billAddress = item;
-              setSelectedDDValue({ ...tempSelecteValue });
+            <View
+              style={{
+                borderWidth: 1,
+                marginTop: 16,
+                justifyContent: "center",
+                paddingHorizontal: 4,
+                height: 30,
+                backgroundColor: "grey",
+              }}
+            >
+              <Text>{fixedText.invoiceStr}</Text>
+            </View>
+            <TextInput
+              style={{
+                marginTop: 16,
+                borderWidth: 1,
+                padding: 10,
+                height: 30,
+                width: "25%",
+              }}
+              onChangeText={(item) => {
+                let fixedTextTemp = fixedText;
+                fixedTextTemp.invoiceNo = item;
+                setFixedText({ ...fixedTextTemp });
+              }}
+              value={fixedText.invoiceNo}
+              placeholder="Invoice no."
+              keyboardType="numeric"
+            />
+            <View
+              style={{
+                borderWidth: 1,
+                marginTop: 16,
+                justifyContent: "center",
+                paddingHorizontal: 4,
+                height: 30,
+                backgroundColor: "grey",
+              }}
+            >
+              <Text>{fixedText.invoiceYearStr}</Text>
+            </View>
+          </View>
+          <View
+            style={{
+              flexDirection: "row",
+              justifyContent: "space-between",
+              width: "40%",
+              maxWidth: "380px",
+              flexWrap: "wrap",
             }}
-          />
-          {Object.keys(selectedDDValue.billAddress).length > 0 ? (
-            <View style={{ flexDirection: "row" }}>
+          >
+            <View style={{ zIndex: 1 }}>
+              <Text style={{ fontSize: 12 }}>{"Issue Date"}</Text>
+              <DatePicker
+                selected={dateValue.issueDate}
+                dateFormat="dd/MM/yyyy"
+                onChange={(value) => {
+                  handleDateChange(value, "issueDate");
+                }}
+              />
+            </View>
+            <View>
+              <Text style={{ fontSize: 12 }}>{"Due Date"}</Text>
+              <DatePicker
+                selected={dateValue.dueDate}
+                dateFormat="dd/MM/yyyy"
+                onChange={(value) => {
+                  handleDateChange(value, "dueDate");
+                }}
+              />
+            </View>
+          </View>
+        </View>
+        {/*Part 2*/}
+        <View
+          style={{
+            flexWrap: "wrap",
+            flexDirection: "row",
+            justifyContent: "space-between",
+            marginTop: 10,
+            zIndex: -1,
+          }}
+        >
+          <View>
+            <DropdownComp
+              label={"Bill To"}
+              data={dropdownList.billTo}
+              placeholder={"Bill to"}
+              selectedValue={selectedDDValue.billTo}
+              dropdownCompValue={{ minWidth: "150px" }}
+              setData={(item) => {
+                let tempSelecteValue = selectedDDValue;
+                tempSelecteValue.billTo = item;
+                setSelectedDDValue({ ...tempSelecteValue });
+              }}
+            />
+            {Object.keys(selectedDDValue.billTo).length > 0 ? (
               <FlatList
-                data={selectedDDValue.billAddress.fields}
+                data={selectedDDValue.billTo.fields}
                 keyExtractor={(item, index) => index.toString()}
                 style={{ marginTop: 5 }}
                 renderItem={({ item, index }) => {
                   return <Text>{item}</Text>;
                 }}
               />
-              <Text>
-                {"GSTIN: "} {selectedDDValue.billAddress.gstIn}
-              </Text>
-            </View>
-          ) : null}
+            ) : null}
+          </View>
+          <View style={{ minWidth: "30%" }}>
+            <DropdownComp
+              label={"Bill Address"}
+              data={dropdownList.billAddress}
+              placeholder={"Bill Address"}
+              selectedValue={selectedDDValue.billAddress}
+              setData={(item) => {
+                let tempSelecteValue = selectedDDValue;
+                tempSelecteValue.billAddress = item;
+                setSelectedDDValue({ ...tempSelecteValue });
+              }}
+            />
+            {Object.keys(selectedDDValue.billAddress).length > 0 ? (
+              <View style={{ flexDirection: "row" }}>
+                <FlatList
+                  data={selectedDDValue.billAddress.fields}
+                  keyExtractor={(item, index) => index.toString()}
+                  style={{ marginTop: 5 }}
+                  renderItem={({ item, index }) => {
+                    return <Text>{item}</Text>;
+                  }}
+                />
+                <Text>
+                  {"GSTIN: "} {selectedDDValue.billAddress.gstIn}
+                </Text>
+              </View>
+            ) : null}
+          </View>
+          <View style={{ minWidth: "30%" }}>
+            <DropdownComp
+              label={"Shipping Address"}
+              data={dropdownList.shippingAddress}
+              placeholder={"Shipping Address"}
+              selectedValue={selectedDDValue.shippingAddress}
+              setData={(item) => {
+                let tempSelecteValue = selectedDDValue;
+                tempSelecteValue.shippingAddress = item;
+                setSelectedDDValue({ ...tempSelecteValue });
+              }}
+            />
+            {Object.keys(selectedDDValue.shippingAddress).length > 0 ? (
+              <FlatList
+                data={selectedDDValue.shippingAddress.fields}
+                keyExtractor={(item, index) => index.toString()}
+                style={{ marginTop: 5 }}
+                renderItem={({ item, index }) => {
+                  return <Text>{item}</Text>;
+                }}
+              />
+            ) : null}
+          </View>
         </View>
-        <View style={{ minWidth: "30%" }}>
+        {/*Part 3*/}
+        <View
+          style={{
+            zIndex: -1,
+          }}
+        >
           <DropdownComp
-            label={"Shipping Address"}
-            data={dropdownList.shippingAddress}
-            placeholder={"Shipping Address"}
-            selectedValue={selectedDDValue.shippingAddress}
+            label={""}
+            data={dropdownList.itemList}
+            placeholder={"Add Item"}
+            selectedValue={""}
+            dropdownCompValue={{ maxWidth: "65%", marginTop: 15 }}
             setData={(item) => {
-              let tempSelecteValue = selectedDDValue;
-              tempSelecteValue.shippingAddress = item;
-              setSelectedDDValue({ ...tempSelecteValue });
+              let selectedItemListTemp = JSON.parse(
+                JSON.stringify(selectedItemList)
+              );
+              let found = false,
+                totalQty = 0,
+                totalDiscount = 0,
+                totalAmount = 0,
+                totalGst = 0,
+                totalNetAmount = 0;
+              selectedItemListTemp.map((itemx) => {
+                if (itemx.value == item.value) {
+                  found = true;
+                  itemx.qty += 1;
+                  itemx.discount = parseFloat(item.discount) * itemx.qty;
+                  itemx.amount =
+                    parseFloat(item.rate) * itemx.qty -
+                    parseFloat(itemx.discount);
+                  if (itemx.gst !== "") {
+                    itemx.gst.amt =
+                      parseFloat(itemx.amount) * (itemx.gst.valueinint / 100);
+                    itemx.netAmt =
+                      parseFloat(itemx.amount) +
+                      parseFloat(itemx.amount) * (itemx.gst.valueinint / 100);
+                  }
+                }
+              });
+              //TODO: add qty when same
+              let qty = 1;
+              if (!found) {
+                selectedItemListTemp.push({
+                  sno: selectedItemListTemp.length + 1 + ".",
+                  item: item.label,
+                  qty: qty,
+                  rate: item.rate,
+                  discount: item.discount,
+                  amount:
+                    parseFloat(item.rate) * qty - parseFloat(item.discount),
+                  gst: "",
+                  netAmt: "",
+                  value: item.value,
+                });
+              }
+              selectedItemListTemp.map((itemx, index) => {
+                itemx.sno = index + 1;
+                totalQty += parseFloat(itemx.qty);
+                totalDiscount += parseFloat(itemx.discount);
+                totalAmount += parseFloat(itemx.amount);
+                totalGst += itemx.gst !== "" ? parseFloat(itemx.gst.amt) : 0;
+                totalNetAmount += parseFloat(itemx.netAmt);
+              });
+              setSelectedItemList(selectedItemListTemp);
+
+              let tempHeaderList = JSON.parse(JSON.stringify(headerList));
+              tempHeaderList.map((itemy) => {
+                switch (itemy.keyName) {
+                  case "qty":
+                    itemy.total = totalQty;
+                    break;
+                  case "discount":
+                    itemy.total = totalDiscount;
+                    break;
+                  case "amount":
+                    itemy.total = totalAmount;
+                    break;
+                  case "gst":
+                    itemy.total = totalGst;
+                    break;
+                  case "netAmt":
+                    itemy.total = totalNetAmount;
+                    break;
+                }
+              });
+
+              setHeaderList(tempHeaderList);
+
+              let fixedTexttemp = fixedText;
+              fixedTexttemp.grandTotal =
+                parseFloat(totalNetAmount) +
+                parseFloat(fixedText.deliveryCharges) -
+                parseFloat(fixedText.extraDiscount);
+              fixedTexttemp.totalQty = totalQty;
+              fixedTexttemp.totalDiscount =
+                parseFloat(totalDiscount) + parseFloat(fixedText.extraDiscount);
+              fixedTexttemp.totalTax = totalGst;
+
+              setFixedText({ ...fixedTexttemp });
             }}
           />
-          {Object.keys(selectedDDValue.shippingAddress).length > 0 ? (
-            <FlatList
-              data={selectedDDValue.shippingAddress.fields}
-              keyExtractor={(item, index) => index.toString()}
-              style={{ marginTop: 5 }}
-              renderItem={({ item, index }) => {
-                return <Text>{item}</Text>;
-              }}
-            />
-          ) : null}
         </View>
-      </View>
-      {/*Part 3*/}
-      <View
-        style={{
-          zIndex: -1000,
-        }}
-      >
-        <DropdownComp
-          label={""}
-          data={dropdownList.itemList}
-          placeholder={"Add Item"}
-          selectedValue={""}
-          dropdownCompValue={{ maxWidth: "65%", marginTop: 15 }}
-          setData={(item) => {
-            let selectedItemListTemp = JSON.parse(
-              JSON.stringify(selectedItemList)
-            );
+        {/* Part 4 */}
 
-            //TODO: add qty when same
-            let qty = 1;
-            selectedItemListTemp.push({
-              sno: selectedItemListTemp.length + 1 + ".",
-              item: item.label,
-              qty: qty,
-              rate: item.rate,
-              discount: item.discount,
-              amount: parseFloat(item.rate) * qty - parseFloat(item.discount),
-              gst: "",
-              netAmt: "",
-            });
-
-            setSelectedItemList(selectedItemListTemp);
-          }}
-        />
-      </View>
-      {/* Part 4 */}
-
-      {/* Part 4 */}
-
-      <ScrollView horizontal={true} style={{ flex: 1 }}>
-        <View style={{ flex: 1, flexGrow: 1 }}>
-          <View
-            style={{
-              flex: 1,
-              maxHeight: "35px",
-            }}
-          >
-            <FlatList
-              data={headerList}
-              keyExtractor={(item, index) => index.toString()}
+        <ScrollView horizontal={true} style={{ flex: 1, zIndex: -1 }}>
+          <View style={{ flex: 1, flexGrow: 1 }}>
+            <View
               style={{
-                marginTop: 5,
-                borderTopWidth: 1,
-                borderBottomWidth: 1,
                 flex: 1,
+                maxHeight: "35px",
               }}
-              horizontal={true}
-              showsHorizontalScrollIndicator={false}
-              renderItem={({ item, index }) => {
+            >
+              <FlatList
+                data={headerList}
+                keyExtractor={(item, index) => index.toString()}
+                style={{
+                  marginTop: 5,
+                  borderTopWidth: 1,
+                  borderBottomWidth: 1,
+                  flex: 1,
+                }}
+                horizontal={true}
+                showsHorizontalScrollIndicator={false}
+                renderItem={({ item, index }) => {
+                  return (
+                    <View style={{ width: item.width, flex: 1 }}>
+                      <Text style={{ fontWeight: "bold" }}>{item.label}</Text>
+                    </View>
+                  );
+                }}
+              />
+            </View>
+            <View>
+              {selectedItemList.map((item, index) => {
+                let selectedMapItem = item,
+                  selectedMapIndex = index;
                 return (
-                  <View style={{ width: item.width, flex: 1 }}>
-                    <Text style={{ fontWeight: "bold" }}>{item.label}</Text>
+                  <View>
+                    <FlatList
+                      data={Object.keys(selectedMapItem)}
+                      keyExtractor={(item, index) => index.toString()}
+                      style={{
+                        marginTop: 5,
+                        flex: 1,
+                      }}
+                      horizontal={true}
+                      showsHorizontalScrollIndicator={false}
+                      renderItem={(itemData) => {
+                        let headerValues = headerList[itemData.index];
+                        if (itemData.item == "value")
+                          return (
+                            <MaterialIcons
+                              name="delete"
+                              size={24}
+                              color="black"
+                              style={{ paddingHorizontal: 10 }}
+                              onPress={(item) => {
+                                let found = false,
+                                  totalQty = 0,
+                                  totalDiscount = 0,
+                                  totalAmount = 0,
+                                  totalGst = 0,
+                                  totalNetAmount = 0;
+                                let selectedItemListTemp = JSON.parse(
+                                  JSON.stringify(selectedItemList)
+                                );
+                                selectedItemListTemp.map((itemx, indexx) => {
+                                  if (itemx.value == selectedMapItem.value) {
+                                    if (itemx.qty == 1) {
+                                      selectedItemListTemp.splice(indexx, 1);
+                                    } else {
+                                      itemx.discount =
+                                        (parseFloat(itemx.discount) /
+                                          parseFloat(itemx.qty)) *
+                                        (parseFloat(itemx.qty) - 1);
+                                      itemx.qty -= 1;
+                                      itemx.amount =
+                                        parseFloat(itemx.rate) * itemx.qty -
+                                        parseFloat(itemx.discount);
+                                      if (itemx.gst !== "") {
+                                        itemx.gst.amt =
+                                          parseFloat(itemx.amount) *
+                                          (itemx.gst.valueinint / 100);
+                                        itemx.netAmt =
+                                          parseFloat(itemx.amount) +
+                                          parseFloat(itemx.amount) *
+                                            (itemx.gst.valueinint / 100);
+                                      }
+                                    }
+                                  }
+                                });
+                                selectedItemListTemp.map((itemx, indexx) => {
+                                  itemx.sno = indexx + 1;
+                                  totalQty += parseFloat(itemx.qty);
+                                  totalDiscount += parseFloat(itemx.discount);
+                                  totalAmount += parseFloat(itemx.amount);
+                                  totalGst +=
+                                    itemx.gst !== ""
+                                      ? parseFloat(itemx.gst.amt)
+                                      : 0;
+                                  totalNetAmount += parseFloat(itemx.netAmt);
+                                });
+                                setSelectedItemList(selectedItemListTemp);
+
+                                let tempHeaderList = JSON.parse(
+                                  JSON.stringify(headerList)
+                                );
+                                tempHeaderList.map((itemy) => {
+                                  switch (itemy.keyName) {
+                                    case "qty":
+                                      itemy.total = totalQty;
+                                      break;
+                                    case "discount":
+                                      itemy.total = totalDiscount;
+                                      break;
+                                    case "amount":
+                                      itemy.total = totalAmount;
+                                      break;
+                                    case "gst":
+                                      itemy.total = totalGst;
+                                      break;
+                                    case "netAmt":
+                                      itemy.total = totalNetAmount;
+                                      break;
+                                  }
+                                });
+
+                                setHeaderList(tempHeaderList);
+
+                                let fixedTexttemp = fixedText;
+                                fixedTexttemp.grandTotal =
+                                  parseFloat(totalNetAmount) +
+                                  parseFloat(fixedText.deliveryCharges) -
+                                  parseFloat(fixedText.extraDiscount);
+                                setFixedText({ ...fixedTexttemp });
+                                fixedTexttemp.totalQty = totalQty;
+                                fixedTexttemp.totalDiscount =
+                                  parseFloat(totalDiscount) +
+                                  parseFloat(fixedText.extraDiscount);
+                                fixedTexttemp.totalTax = totalGst;
+                                setFixedText({ ...fixedTexttemp });
+                              }}
+                            />
+                          );
+                        return (
+                          <View
+                            style={{
+                              width: headerValues.width,
+                              flex: 1,
+                            }}
+                          >
+                            {headerValues.dropdown ? (
+                              <View>
+                                <DropdownComp
+                                  label={""}
+                                  data={dropdownList.gst}
+                                  placeholder={"GST%"}
+                                  selectedValue={selectedMapItem.gst.value}
+                                  dropdownCompValue={{
+                                    marginRight: 0,
+                                    maxHeight: "20px",
+                                    maxWidth: "70px",
+                                  }}
+                                  setData={(item) => {
+                                    let selectedItemListTemp = JSON.parse(
+                                      JSON.stringify(selectedItemList)
+                                    );
+
+                                    //TODO: add qty when same
+                                    let qty = 1;
+                                    selectedItemListTemp[selectedMapIndex].gst =
+                                      item;
+                                    selectedItemListTemp[
+                                      selectedMapIndex
+                                    ].gst.amt =
+                                      parseFloat(
+                                        selectedItemListTemp[selectedMapIndex]
+                                          .amount
+                                      ) *
+                                      (item.valueinint / 100);
+                                    selectedItemListTemp[
+                                      selectedMapIndex
+                                    ].netAmt =
+                                      parseFloat(
+                                        selectedItemListTemp[selectedMapIndex]
+                                          .amount
+                                      ) +
+                                      parseFloat(
+                                        selectedItemListTemp[selectedMapIndex]
+                                          .amount
+                                      ) *
+                                        (item.valueinint / 100);
+
+                                    let totalQty = 0,
+                                      totalDiscount = 0,
+                                      totalAmount = 0,
+                                      totalGst = 0,
+                                      totalNetAmount = 0;
+                                    selectedItemListTemp.map(
+                                      (itemx, indexx) => {
+                                        itemx.sno = indexx + 1;
+                                        totalQty += parseFloat(itemx.qty);
+                                        totalDiscount += parseFloat(
+                                          itemx.discount
+                                        );
+                                        totalAmount += parseFloat(itemx.amount);
+                                        totalGst +=
+                                          itemx.gst !== ""
+                                            ? parseFloat(itemx.gst.amt)
+                                            : 0;
+                                        totalNetAmount += parseFloat(
+                                          itemx.netAmt
+                                        );
+                                      }
+                                    );
+                                    setSelectedItemList(selectedItemListTemp);
+
+                                    let tempHeaderList = JSON.parse(
+                                      JSON.stringify(headerList)
+                                    );
+                                    tempHeaderList.map((itemy) => {
+                                      switch (itemy.keyName) {
+                                        case "qty":
+                                          itemy.total = totalQty;
+                                          break;
+                                        case "discount":
+                                          itemy.total = totalDiscount;
+                                          break;
+                                        case "amount":
+                                          itemy.total = totalAmount;
+                                          break;
+                                        case "gst":
+                                          itemy.total = totalGst;
+                                          break;
+                                        case "netAmt":
+                                          itemy.total = totalNetAmount;
+                                          break;
+                                      }
+                                    });
+
+                                    setHeaderList(tempHeaderList);
+
+                                    let fixedTexttemp = fixedText;
+                                    fixedTexttemp.grandTotal =
+                                      parseFloat(totalNetAmount) +
+                                      parseFloat(fixedText.deliveryCharges) -
+                                      parseFloat(fixedText.extraDiscount);
+                                    setFixedText({ ...fixedTexttemp });
+                                    fixedTexttemp.totalQty = totalQty;
+                                    fixedTexttemp.totalDiscount =
+                                      parseFloat(totalDiscount) +
+                                      parseFloat(fixedText.extraDiscount);
+                                    fixedTexttemp.totalTax = totalGst;
+
+                                    setFixedText({ ...fixedTexttemp });
+                                  }}
+                                />
+
+                                <Text style={{ fontSize: 12 }}>
+                                  {selectedMapItem[
+                                    headerValues.keyName
+                                  ].amt?.toString()}
+                                </Text>
+                              </View>
+                            ) : (
+                              <Text>
+                                {selectedMapItem[headerValues.keyName]}
+                              </Text>
+                            )}
+                          </View>
+                        );
+                      }}
+                    />
                   </View>
                 );
+              })}
+            </View>
+            {selectedItemList.length == 0 ? null : (
+              <View
+                style={{
+                  flex: 1,
+                  maxHeight: "35px",
+                }}
+              >
+                <FlatList
+                  data={headerList}
+                  keyExtractor={(item, index) => index.toString()}
+                  style={{
+                    marginTop: 5,
+                    borderTopWidth: 1,
+                    borderBottomWidth: 1,
+                    flex: 1,
+                  }}
+                  horizontal={true}
+                  showsHorizontalScrollIndicator={false}
+                  renderItem={({ item, index }) => {
+                    return (
+                      <View style={{ width: item.width, flex: 1 }}>
+                        <Text style={{ fontWeight: "bold" }}>{item.total}</Text>
+                      </View>
+                    );
+                  }}
+                />
+              </View>
+            )}
+          </View>
+        </ScrollView>
+
+        {/* Part 5 */}
+        <View
+          style={{
+            flexDirection: "row",
+            justifyContent: "space-between",
+            flexWrap: "wrap-reverse",
+            zIndex: -1,
+          }}
+        >
+          <View style={{ width: "40%" }}>
+            <View style={{ borderWidth: 1 }}>
+              <Text style={{ fontSize: 12, fontWeight: "bold" }}>
+                {"Term & Conditions:"}
+              </Text>
+              <Text style={{ fontSize: 12 }}>{fixedText.tnc}</Text>
+            </View>
+            <View style={{ borderWidth: 1, marginTop: 10 }}>
+              <Text style={{ fontSize: 12, fontWeight: "bold" }}>
+                {"Notes:"}
+              </Text>
+              <TextInput
+                style={{
+                  minHeight: "50px",
+                  fontWeight: 12,
+                }}
+                onChangeText={(item) => {
+                  let fixedTextTemp = fixedText;
+                  fixedTextTemp.note = item;
+                  setFixedText({ ...fixedTextTemp });
+                }}
+                value={fixedText.note}
+                multiline={true}
+                placeholder="Please Enter Notes"
+              />
+            </View>
+          </View>
+          <View style={{ justifyContent: "end" }}>
+            <Text
+              style={{
+                padding: 5,
+                borderWidth: 1,
+                fontWeight: "bold",
+                alignSelf: "center",
               }}
-            />
+            >
+              CGST: {fixedText.cgst}
+              {"\n"}SGST: {fixedText.sgst}
+            </Text>
+          </View>
+          <View>
+            <View style={{ flexDirection: "row" }}>
+              <Text style={{ width: "120px", alignSelf: "center" }}>
+                Extra Discount
+              </Text>
+              <Text
+                style={{
+                  width: "140px",
+                  borderWidth: 1,
+                  margin: 5,
+                  padding: 2,
+                }}
+              >
+                {"-"}
+                {fixedText.extraDiscount}{" "}
+              </Text>
+            </View>
+            <View style={{ flexDirection: "row" }}>
+              <Text style={{ width: "120px", alignSelf: "center" }}>
+                Delivery Charges
+              </Text>
+              <Text
+                style={{
+                  width: "140px",
+                  borderWidth: 1,
+                  margin: 5,
+                  padding: 2,
+                }}
+              >
+                {fixedText.deliveryCharges}{" "}
+              </Text>
+            </View>
+            <View style={{ flexDirection: "row" }}>
+              <Text style={{ width: "120px", alignSelf: "center" }}>
+                Round Off
+              </Text>
+              <Text
+                style={{
+                  width: "140px",
+                  borderWidth: 1,
+                  margin: 5,
+                  padding: 2,
+                }}
+              >
+                {fixedText.roundOff}{" "}
+              </Text>
+            </View>
+            <View style={{ flexDirection: "row" }}>
+              <Text
+                style={{
+                  width: "120px",
+                  fontWeight: "bold",
+                  alignSelf: "center",
+                }}
+              >
+                Grand Total
+              </Text>
+              <Text
+                style={{
+                  width: "140px",
+                  fontWeight: "bold",
+                  margin: 5,
+                }}
+              >
+                ₹{fixedText.grandTotal}
+              </Text>
+            </View>
+          </View>
+        </View>
+        {/* Part 6 */}
+        <Divider
+          bold={true}
+          style={{ marginVertical: 10, height: 2, backgroundColor: "black" }}
+        />
+        <View
+          style={{
+            flexWrap: "wrap",
+            flexDirection: "row",
+            justifyContent: "space-between",
+          }}
+        >
+          <View style={{ flexWrap: "wrap", flexDirection: "row" }}>
+            <View style={{ flexDirection: "row", marginRight: 7 }}>
+              <Text
+                style={{
+                  fontSize: 17,
+                  fontWeight: "bold",
+                  alignSelf: "center",
+                }}
+              >
+                Total Qty:{" "}
+              </Text>
+              <Text style={{ fontSize: 17, alignSelf: "center" }}>
+                {fixedText.totalQty}
+              </Text>
+            </View>
+            <View style={{ flexDirection: "row", marginRight: 7 }}>
+              <Text
+                style={{
+                  fontSize: 17,
+                  fontWeight: "bold",
+                  alignSelf: "center",
+                }}
+              >
+                {"-"}Total Discount:{" "}
+              </Text>
+              <Text style={{ fontSize: 17, alignSelf: "center" }}>
+                {fixedText.totalDiscount}
+              </Text>
+            </View>
+            <View style={{ flexDirection: "row", marginRight: 7 }}>
+              <Text
+                style={{
+                  fontSize: 17,
+                  fontWeight: "bold",
+                  alignSelf: "center",
+                }}
+              >
+                Total Tax:{" "}
+              </Text>
+              <Text style={{ fontSize: 17, alignSelf: "center" }}>
+                {fixedText.totalTax}
+              </Text>
+            </View>
+            <View style={{ flexDirection: "row", marginRight: 7 }}>
+              <Text
+                style={{
+                  fontSize: 17,
+                  fontWeight: "bold",
+                  borderBottomWidth: 1,
+                  alignSelf: "center",
+                }}
+              >
+                Grand Total :{" "}
+              </Text>
+              <Text
+                style={{
+                  fontSize: 17,
+                  fontWeight: "bold",
+                  borderBottomWidth: 1,
+                  alignSelf: "center",
+                }}
+              >
+                {"₹"}
+                {fixedText.grandTotal}
+              </Text>
+            </View>
           </View>
           <View
             style={{
-              flex: 1,
+              flexDirection: "row",
+              justifyContent: "space-between",
             }}
           >
-            {selectedItemList.map((item, index) => {
-              let selectedMapItem = item,
-                selectedMapIndex = index;
-              return (
-                <View>
-                  <FlatList
-                    data={Object.keys(selectedMapItem)}
-                    keyExtractor={(item, index) => index.toString()}
-                    style={{
-                      marginTop: 5,
-                      flex: 1,
-                    }}
-                    horizontal={true}
-                    showsHorizontalScrollIndicator={false}
-                    renderItem={(itemData) => {
-                      let headerValues = headerList[itemData.index];
-                      return (
-                        <View style={{ width: headerValues.width, flex: 1 }}>
-                          {headerValues.dropdown ? (
-                            <View>
-                              <DropdownComp
-                                label={""}
-                                data={dropdownList.gst}
-                                placeholder={"GST%"}
-                                selectedValue={selectedMapItem.gst.value}
-                                dropdownCompValue={{
-                                  marginRight: 0,
-                                  maxHeight: "20px",
-                                  maxWidth: "70px",
-                                }}
-                                setData={(item) => {
-                                  let selectedItemListTemp = JSON.parse(
-                                    JSON.stringify(selectedItemList)
-                                  );
-
-                                  //TODO: add qty when same
-                                  let qty = 1;
-                                  selectedItemListTemp[selectedMapIndex].gst =
-                                    item;
-                                  selectedItemListTemp[
-                                    selectedMapIndex
-                                  ].gst.amt =
-                                    parseFloat(
-                                      selectedItemListTemp[selectedMapIndex]
-                                        .amount
-                                    ) *
-                                    (item.valueinint / 100);
-                                  selectedItemListTemp[
-                                    selectedMapIndex
-                                  ].netAmt =
-                                    parseFloat(
-                                      selectedItemListTemp[selectedMapIndex]
-                                        .amount
-                                    ) +
-                                    parseFloat(
-                                      selectedItemListTemp[selectedMapIndex]
-                                        .amount
-                                    ) *
-                                      (item.valueinint / 100);
-                                  setSelectedItemList(selectedItemListTemp);
-                                }}
-                              />
-
-                              <Text style={{ fontSize: 12 }}>
-                                {selectedMapItem[
-                                  headerValues.keyName
-                                ].amt?.toString()}
-                              </Text>
-                            </View>
-                          ) : (
-                            <Text>{selectedMapItem[headerValues.keyName]}</Text>
-                          )}
-                        </View>
-                      );
-                    }}
-                  />
-                </View>
-              );
-            })}
+            <TouchableOpacity
+              style={{
+                borderWidth: 0.5,
+                backgroundColor: "red",
+                padding: 10,
+                borderRadius: 10,
+                marginRight: 10,
+              }}
+            >
+              <Text style={{ color: "white" }}>CANCLE</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={{
+                borderWidth: 0.5,
+                backgroundColor: "#55AAFF",
+                padding: 10,
+                borderRadius: 10,
+              }}
+              onPress={() => {
+                generatePDFStyle2();
+              }}
+            >
+              <Text style={{ color: "white" }}>SUBMIT</Text>
+            </TouchableOpacity>
           </View>
         </View>
-      </ScrollView>
+      </ImageBackground>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
-  input: {},
+  mainContainer: {
+    overflow: "hidden",
+    borderRadius: 10,
+    borderWidth: 2,
+    flex: 1,
+    padding: 10,
+    margin: 30,
+    maxWidth: "80%",
+    alignSelf: "center",
+    zIndex: -2,
+  },
 });
 
 export default SaleView;
