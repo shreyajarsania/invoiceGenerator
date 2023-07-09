@@ -16,11 +16,12 @@ import { unstable_batchedUpdates } from "react-dom";
 import { TextInput } from "react-native";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
-import moment from "moment";
 import { MaterialIcons } from "@expo/vector-icons";
-import { PDFDocument, PageSizes } from "pdf-lib";
 
-const SaleView = ({ history }) => {
+import { useNavigate } from "react-router-dom";
+
+const SaleView = () => {
+  const navigate = useNavigate();
   const [fixedText, setFixedText] = useState({
     invoiceStr: "",
     invoiceNo: "",
@@ -214,6 +215,7 @@ const SaleView = ({ history }) => {
           width: "100px",
           dropdown: false,
           total: "",
+          pdfWidth: 40,
         },
         {
           label: "Item",
@@ -221,6 +223,7 @@ const SaleView = ({ history }) => {
           width: "310px",
           dropdown: false,
           total: "",
+          pdfWidth: 180,
         },
         {
           label: "Qty",
@@ -228,6 +231,7 @@ const SaleView = ({ history }) => {
           width: "100px",
           dropdown: false,
           total: "0",
+          pdfWidth: 30,
         },
         {
           label: "Rate@",
@@ -235,6 +239,7 @@ const SaleView = ({ history }) => {
           width: "100px",
           dropdown: false,
           total: "0",
+          pdfWidth: 50,
         },
         {
           label: "Discount",
@@ -242,6 +247,7 @@ const SaleView = ({ history }) => {
           width: "100px",
           dropdown: false,
           total: "0",
+          pdfWidth: 50,
         },
         {
           label: "Amount",
@@ -249,6 +255,7 @@ const SaleView = ({ history }) => {
           width: "100px",
           dropdown: false,
           total: "0",
+          pdfWidth: 80,
         },
         {
           label: "GST%",
@@ -256,6 +263,7 @@ const SaleView = ({ history }) => {
           width: "100px",
           dropdown: true,
           total: "0",
+          pdfWidth: 50,
         },
         {
           label: "Net Amount",
@@ -263,6 +271,7 @@ const SaleView = ({ history }) => {
           width: "100px",
           dropdown: false,
           total: "0",
+          pdfWidth: 80,
         },
       ];
       setHeaderList(headerListTemp);
@@ -272,27 +281,6 @@ const SaleView = ({ history }) => {
   useEffect(() => {
     setDataValues();
   }, []);
-
-  const generatePDFStyle2 = async () => {
-    console.log("before pdfDoc!!!!");
-    const pdfDoc = await PDFDocument.create();
-    console.log("after pdfDoc!!!!");
-    const page = pdfDoc.addPage(PageSizes.A4);
-    const { width, height } = page.getSize();
-    const textContent = "Hello, World!";
-
-    page.drawText(textContent, {
-      x: 50,
-      y: height - 50,
-      size: 30,
-    });
-
-    const pdfBytes = await pdfDoc.save();
-
-    const blob = new Blob([pdfBytes], { type: "application/pdf" });
-    const url = URL.createObjectURL(blob);
-    pdfRef.current.src = url;
-  };
 
   return (
     <View style={{ flex: 1 }}>
@@ -1132,7 +1120,33 @@ const SaleView = ({ history }) => {
                 borderRadius: 10,
               }}
               onPress={() => {
-                generatePDFStyle2();
+                const state = {
+                  data: JSON.stringify({
+                    fixedText: fixedText,
+                    selectedDDValue: selectedDDValue,
+                    selectedItemList: selectedItemList,
+                    headerList: headerList,
+                    dateValue: dateValue,
+                  }),
+                };
+
+                navigate(`/pdfScreen?${new URLSearchParams(state).toString()}`);
+                // navigate("/pdfScreen", {
+                //   fixedText: "Fixed Text",
+                //   selectedDDValue: "Selected Dropdown Value",
+                //   selectedItemList: ["Item 1", "Item 2", "Item 3"],
+                //   headerList: ["Header 1", "Header 2", "Header 3"],
+                // });
+                // window.location.href = `/pdfScreen?data=${{
+                //   fixedText: fixedText,
+                //   selectedDDValue: selectedDDValue,
+                //   selectedItemList: selectedItemList,
+                //   headerList: headerList,
+                // }}`;
+                // history.push({
+                //   pathname: "/pdfScreen",
+                //   state: ,
+                // });
               }}
             >
               <Text style={{ color: "white" }}>SUBMIT</Text>
