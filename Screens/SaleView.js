@@ -81,6 +81,12 @@ const SaleView = () => {
       tempFixedText.extraDiscount = "635.21";
       tempFixedText.deliveryCharges = "1200.21";
       tempFixedText.roundOff = "0.04";
+      tempFixedText.invoiceNo = "";
+      tempFixedText.note = "";
+      tempFixedText.grandTotal = "";
+      tempFixedText.totalQty = "";
+      tempFixedText.totalDiscount = "";
+      tempFixedText.totalTax = "";
       setFixedText({ ...tempFixedText });
 
       let dropdownListTemp = dropdownList;
@@ -1109,6 +1115,15 @@ const SaleView = () => {
                 borderRadius: 10,
                 marginRight: 10,
               }}
+              onPress={() => {
+                setDataValues();
+                setSelectedItemList(JSON.parse(JSON.stringify([])));
+                let selectedDDValueTemp = selectedDDValue;
+                Object.keys(selectedDDValue).map((item) => {
+                  selectedDDValueTemp[item] = {};
+                });
+                setSelectedDDValue({ ...selectedDDValueTemp });
+              }}
             >
               <Text style={{ color: "white" }}>CANCLE</Text>
             </TouchableOpacity>
@@ -1131,22 +1146,6 @@ const SaleView = () => {
                 };
 
                 navigate(`/pdfScreen?${new URLSearchParams(state).toString()}`);
-                // navigate("/pdfScreen", {
-                //   fixedText: "Fixed Text",
-                //   selectedDDValue: "Selected Dropdown Value",
-                //   selectedItemList: ["Item 1", "Item 2", "Item 3"],
-                //   headerList: ["Header 1", "Header 2", "Header 3"],
-                // });
-                // window.location.href = `/pdfScreen?data=${{
-                //   fixedText: fixedText,
-                //   selectedDDValue: selectedDDValue,
-                //   selectedItemList: selectedItemList,
-                //   headerList: headerList,
-                // }}`;
-                // history.push({
-                //   pathname: "/pdfScreen",
-                //   state: ,
-                // });
               }}
             >
               <Text style={{ color: "white" }}>SUBMIT</Text>
